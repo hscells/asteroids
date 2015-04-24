@@ -8,49 +8,48 @@ local asteroids = {}
 local bullets = {}
 local fullscreen = false
 
+-- add an asteroid to the game
 function AddAsteroid(x,y,size,health,vx,vy)
    return table.insert(asteroids,Asteroid.create(x,y,width,height,size,health,vx,vy))
 end
 
+-- add a bullet to the game
 function CreateBullet(x,y)
    return table.insert(bullets,Bullet.create(x,y,width,height,angle))
 end
 
-function CheckCollisionBox(x1,y1,w1,h1, x2,y2,w2,h2)
-  return x1 < x2+w2 and
-         x2 < x1+w1 and
-         y1 < y2+h2 and
-         y2 < y1+h1
-end
-
+-- check the bounding box of two circles
 function CheckCollisionCircle(x1,y1,radius1, x2,y2,radius2)
   return math.sqrt( ( x2-x1 ) * ( x2-x1 )  + ( y2-y1 ) * ( y2-y1 ) ) < ( radius1 + radius2 )
 end
 
+-- check to see if two asteroid objects collide
 function CheckAsteroidCollision(asteroid1, asteroid2)
    return CheckCollisionCircle(asteroid1.x,asteroid1.y,asteroid1.size,asteroid2.x,asteroid2.y,asteroid2.size)
 end
 
+-- check to see if an asteroid collided with the ship
 function CheckShipCollision(asteroid)
-   return CheckCollisionCircle(x,y+20,24,asteroid.x,asteroid.y,asteroid.size)
+   return CheckCollisionCircle(x,y,12,asteroid.x,asteroid.y,asteroid.size)
 end
 
+-- have some events trigger for fullscreen and to quit
 function love.keypressed(key)
    if key == "f" then
       fullscreen = not fullscreen
       love.window.setFullscreen(fullscreen,"desktop")
       width = love.graphics.getWidth()
       height = love.graphics.getHeight() - 32
-      if love.system.getOS() == "OS X" then
-         love.window.toPixels(width,height)
-      end
+      love.window.toPixels(width,height)
    elseif key == "escape" then
       love.event.quit()
    end
 end
 
-function restart()
+-- restart the whole game over
+function Restart()
    lives = 3
+   score = 0
    pos = 1
    for key, bullet in ipairs(bullets) do
       table.remove(bullets,pos)
@@ -62,9 +61,30 @@ function restart()
       pos = pos + 1
    end
    x, y = width/2, height/2
+   love.timer.sleep(1)
+end
+
+-- clear the board and loose a life
+function LooseLife()
+   lives = lives - 1
+   x, y = width/2, height/2
+   pos = 1
+   for key, bullet in ipairs(bullets) do
+      table.remove(bullets,pos)
+      pos = pos + 1
+   end
+   pos = 1
+   for key, asteroid in ipairs(asteroids) do
+      table.remove(asteroids,pos)
+      pos = pos + 1
+   end
+   love.timer.sleep(1)
 end
 
 function love.load()
+
+   love.window.setTitle("Asteroids")
+
    x, y = width/2, height/2
    friction = 0.05
    acceleration_rate = 0.2
@@ -104,7 +124,8 @@ function love.update()
    x = x + (speed * math.cos(angle))
    y = y + (speed * math.sin(angle))
 
-   -- update the asteroids and check their collisions
+   -- update the asteroids and check all of their collisions with bullets and
+   -- the ship
    pos = 1
    for key, asteroid in ipairs(asteroids) do
       asteroid:update()
@@ -188,10 +209,9 @@ function love.update()
    elseif y < 0 then
       y = height
    end
-
    -- create asteroids
    if table.getn(asteroids) < max_asteroids then
-      if math.random(1) == 1 then
+      if math.random(100) == 1 then
          AddAsteroid(math.random(width),math.random(height),math.random(15)+25,3,math.random(3.0)-1.5,math.random(3.0)-1.5)
       end
    end
@@ -230,6 +250,7 @@ function love.draw()
       love.graphics.pop()
    end
 
+   -- draw the little information bar down the bottom
    love.graphics.setColor(188,188,188)
    love.graphics.polygon("fill",{0,height,width,height,width,height+32,0,height+32})
    love.graphics.setColor(0,0,0)
