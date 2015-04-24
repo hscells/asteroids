@@ -1,7 +1,7 @@
 # asteroids
 A variant of the popular asteroids game written in lua in the Love2d Engine
 
-[Asteroids](http://i.imgur.com/lf0XXRD.png)
+![Asteroids](http://i.imgur.com/lf0XXRD.png)
 
  - ```Arrow Keys``` to move
  - ```Z``` to shoot
