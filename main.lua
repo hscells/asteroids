@@ -79,17 +79,22 @@ function love.load()
    font = love.graphics.newFont("VT323.ttf",30)
    font:setFilter("nearest","nearest",-1)
    love.graphics.setFont(font)
+
+   snd_shoot = love.audio.newSource("sounds/shoot.wav","stream")
+   snd_asteroid_explode = love.audio.newSource("sounds/asteroid_explode.wav","stream")
+   snd_ship_explode = love.audio.newSource("sounds/ship_explode.wav","stream")
+
 end
 
 function love.update()
 
+   -- restart the game if we loose all lives
    if lives <= 0 then
-      restart()
+      Restart()
    end
-
    -- deaccelerate
    speed = speed - friction
-
+   -- make sure the ship can't go negative speeds
    if speed > max_speed then
       speed = max_speed
    elseif speed < 0 then
@@ -111,11 +116,14 @@ function love.update()
       if CheckShipCollision(asteroid) then
          lives = lives - 1
          table.remove(asteroids,pos)
+         love.audio.play(snd_ship_explode)
+         LooseLife()
       end
 
       bpos = 1
       for key, bullet in ipairs(bullets) do
          if CheckAsteroidCollision(bullet,asteroid) then
+            love.audio.play(snd_asteroid_explode)
             table.remove(asteroids,pos)
             table.remove(bullets,bpos)
             if asteroid.health == 3 then
@@ -156,21 +164,20 @@ function love.update()
    elseif love.keyboard.isDown("right") then
       angle = angle + turn_rate
    end
-
    -- accelerate the ship
    if love.keyboard.isDown("up") then
       speed = speed + acceleration_rate
    end
-
+   -- allow the ship to shoot
    if love.keyboard.isDown("z") then
       if shoot == true then
          CreateBullet(x,y)
+         love.audio.play(snd_shoot)
          shoot = false
       end
    elseif not love.keyboard.isDown("z") then
       shoot = true
    end
-
    -- loop the ship around the screen
    if x > width then
       x = 0
